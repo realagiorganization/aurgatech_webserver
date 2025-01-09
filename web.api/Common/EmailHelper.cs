@@ -59,18 +59,18 @@ The AURGA Team";
         public static void SendUpdateEmailEmail(string email, string verificationCode)
         {
             var msg = new MailItem();
-            msg.Subject = "Change Password Verification Code - Action Required";
+            msg.Subject = "Email Change Request - Action Required";
             msg.CampaignId = -1;
             msg.Address = email;
             msg.Message = $@"Hey,
 
-We've received a request to change the password for your account. To proceed with updating your password, please enter the following 6-digit verification code on our website:
+We've received a request to change the email address associated with your account. To proceed with this change, please enter the following 6-digit verification code on our website/app:
 
-Verification Code:   {verificationCode}
+Verification Code: {verificationCode}
 
 Please note that this verification code will expire in 10 minutes, so be sure to enter it promptly.
 
-If you did not initiate this request, please ignore this email and your password will remain unchanged.
+If you did not initiate this request, please ignore this email and your account email will remain unchanged.
 
 If you have any questions or need further assistance, feel free to contact our support team via this email.
 
