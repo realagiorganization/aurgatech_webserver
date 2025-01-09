@@ -2,7 +2,7 @@ import { X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getServerUrl } from '../../utils/utils'
+import { getServerUrl, isValidEmail } from '../../utils/utils'
 import { User } from '../../types/types'
 
 interface ChangeEmailDialogProps {
@@ -35,7 +35,7 @@ export function ChangeEmailDialog({ originEmail, isOpen, onClose, onSuccessfulCh
 
     const email = newEmail.trim();
 
-    if (!email) {
+    if (!isValidEmail(email)) {
       setError('Please enter a valid email address.');
       return;
     }
@@ -83,7 +83,7 @@ export function ChangeEmailDialog({ originEmail, isOpen, onClose, onSuccessfulCh
       }
     } catch (error) {
       toast.error('Could not connect to server. Please try again.');
-    }finally {
+    } finally {
       setIsLoading(false);
     }
   };
@@ -140,7 +140,7 @@ export function ChangeEmailDialog({ originEmail, isOpen, onClose, onSuccessfulCh
       }
     } catch (error) {
       toast.error('Could not connect to server. Please try again.');
-    }finally {
+    } finally {
       setIsLoading(false);
     }
 
@@ -237,12 +237,15 @@ export function ChangeEmailDialog({ originEmail, isOpen, onClose, onSuccessfulCh
                 <input
                   type="text"
                   id="verificationCode"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
+                  required
+                  maxLength={6}
+                  pattern="\d{6}"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 
-                             bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="Enter verification code"
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 
+                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
                   autoFocus
                   disabled={isLoading}
                 />

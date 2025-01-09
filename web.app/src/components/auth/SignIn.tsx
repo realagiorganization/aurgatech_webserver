@@ -4,7 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { MD5 } from 'crypto-js'
 import { config } from '../../utils/config'
-import { getServerUrl } from '../../utils/utils'
+import { getServerUrl, isValidEmail } from '../../utils/utils'
 
 const PUBLIC_CLOUD_URL = 'https://my.aurga.com'
 
@@ -23,8 +23,7 @@ export function SignIn() {
 
     const serverUrl = getServerUrl();
 
-    const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // Regular expression for email validation
-    if (!email || !emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       toast.error('Please enter a valid email address')
       return;
     }

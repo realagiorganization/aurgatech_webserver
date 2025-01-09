@@ -52,7 +52,7 @@ namespace aurga
 
                     // check if user.email is valid format
 
-                    if (!Regex.IsMatch(email, @"^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[\w-]{2,10}$"))
+                    if (!Regex.IsMatch(email, @"^^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                     {
                         return Results.Json(new { status = RC.INVALID_EMAIL_FORMAT });
                     }

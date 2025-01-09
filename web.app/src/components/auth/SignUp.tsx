@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react'
-import { getServerUrl } from '../../utils/utils'
+import { getServerUrl, isValidEmail } from '../../utils/utils'
 import { MD5 } from 'crypto-js'
 import toast from 'react-hot-toast'
 
@@ -65,9 +65,7 @@ export function SignUp() {
       return
     }
 
-    const emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/; // Regular expression for email validation
-
-    if (!email || !emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       toast.error('Please enter a valid email address')
       return
     }
