@@ -19,6 +19,12 @@
         public string ResetPasswordToken { get; set; }
         public DateTime ResetPasswordVerificationTime { get; set; }
 
+        public string UpdateEmailVerificationCode { get; set; }
+        public string UpdateEmailToken { get; set; }
+        public DateTime UpdateEmailVerificationTime { get; set; }
+
+        public string NewEmail { get; set; }
+
         public string DeactivationVerificationCode { get; set; }
         public string DeactivationToken { get; set; }
         public DateTime DeactivationVerificationTime { get; set; }

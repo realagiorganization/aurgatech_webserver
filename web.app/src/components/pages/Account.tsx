@@ -8,11 +8,13 @@ import { useNavigate } from 'react-router-dom'
 import { DeleteSubAccountDialog } from '../dialogs/DeleteSubAccountDialog'
 import { RenameDialog } from '../dialogs/RenameDialog'
 import { ConfirmDialog } from '../dialogs/ConfirmDialog'
+import { ChangeEmailDialog } from '../dialogs/ChangeEmailDialog'
 
 export function Account() {
   const navigate = useNavigate()
   const [showSendInvitation, setShowSendInvitation] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showRenameAccountDialog, setShowRenameAccountDialog] = useState(false)
   const [showRenameSubAccountDialog, setShowRenameSubAccountDialog] = useState(false)
   const [subAccounts, setSubAccounts] = useState<SubAccount[]>([])
   const [selectedSubAccount, setSelectedSubAccount] = useState<SubAccount | null>(null)
@@ -23,17 +25,24 @@ export function Account() {
   const [mainAccounts, setMainAccounts] = useState<User[]>([])
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false)
   const [disconnectAccount, setDisconnectAccount] = useState<User | null>(null)
+  const [showEmailChangeDialog, setShowEmailChangeDialog] = useState(false)
+  const [mainUser, setMainUser] = useState<User>(() => {
+    return JSON.parse(localStorage.getItem('user') || '{}') as User;
+  })
 
   // Get bound devices from localStorage
   const [boundDevices, setBoundDevices] = useState<Device[]>([])
   const subAccountContainerRef = useRef<HTMLDivElement>(null);
   const [maxContainerHeight, setMaxContainerHeight] = useState<number>(300);
 
-  const mainUser = JSON.parse(localStorage.getItem('user') || '{}') as User
   let assigningDevice: boolean = false
 
   const [hasClipboardContent, setHasClipboardContent] = useState(false);
   const codeInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem('user', JSON.stringify(mainUser));
+  }, [mainUser]);
 
   const checkClipboardContent = async () => {
     try {
@@ -80,7 +89,7 @@ export function Account() {
       switch (data.status) {
         case 0:
           {
-            const devices = data.devices.map(item => ({
+            const devices = data.devices.map((item: any) => ({
               id: item.id, // Map 'id' directly
               name: item.name, // Map 'name' directly
               type: 'AVW1', // Map 'type' directly
@@ -95,7 +104,7 @@ export function Account() {
             }))
 
             setBoundDevices(devices)
-            const accounts = data.accounts.map(item => ({
+            const accounts = data.accounts.map((item: any) => ({
               id: item.id, // Map 'id' directly
               name: item.name, // Map 'name' directly
               email: item.email, // Map 'email' directly
@@ -349,6 +358,49 @@ export function Account() {
     }
   }
 
+  const handleRenameAccount = async (newName: string) => {
+    if (!mainUser || !newName) return
+
+    try {
+      const serverUrl = getServerUrl();
+
+      const response = await fetch(serverUrl + '/api/v2/rename_account',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid: mainUser.uid,
+            token: mainUser.token,
+            newName: newName
+          })
+        });
+
+      if (!response.ok) throw new Error();
+      const data = await response.json();
+
+      switch (data.status) {
+        case 0:
+          {
+            setMainUser(prev => ({ ...prev, name: newName }))
+            break;
+          }
+        case -100:
+          toast.error('Loading too fast. Please try again.');
+          break;
+        case -106:
+        case -109:
+          logoutAndRedirect();
+          navigate('/signin');
+          break;
+        default:
+          toast.error('Unknown error. Please try again.');
+          break;
+      }
+    } catch (error) {
+      toast.error('Could not connect to server. Please try again.');
+    }
+  }
+
   const handleRenameSubAccount = async (newName: string) => {
     if (!selectedSubAccount || !mainUser || !newName) return
 
@@ -567,12 +619,32 @@ export function Account() {
                   <LucideUser className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {mainUser.name || 'Main Account'}
-                  </h2>
-                  <p className="text-gray-500 dark:text-gray-400">
-                    {mainUser.email || 'No email set'}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {mainUser.name || 'Main Account'}
+                    </h2>
+                    <button
+                      onClick={() => {
+                        setShowRenameAccountDialog(true)
+                      }}
+                      className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      title="Edit Account Name"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-gray-500 dark:text-gray-400">
+                      {mainUser.email || 'No email set'}
+                    </p>
+                    <button
+                      onClick={() => setShowEmailChangeDialog(true)}
+                      className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      title="Edit Email"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
               <button
@@ -924,6 +996,15 @@ export function Account() {
         }} />
 
       <RenameDialog
+        originName={mainUser?.name}
+        title='Rename Account'
+        message='Account Name'
+        isOpen={showRenameAccountDialog}
+        onClose={() => setShowRenameAccountDialog(false)}
+        onRename={(name) => handleRenameAccount(name)}
+      />
+
+      <RenameDialog
         originName={selectedSubAccount?.name}
         title='Rename Sub Account'
         message='Sub Account Name'
@@ -931,6 +1012,16 @@ export function Account() {
         onClose={() => setShowRenameSubAccountDialog(false)}
         onRename={(name) => handleRenameSubAccount(name)}
       />
+
+      <ChangeEmailDialog
+      originEmail={mainUser?.email}
+      isOpen={showEmailChangeDialog}
+      onClose={() => setShowEmailChangeDialog(false)}
+      onSuccessfulChange={(email) => {
+        setMainUser(prev => ({ ...prev, email: email }))
+        setShowEmailChangeDialog(false)
+      }
+      } />
 
       {/* Invitation Code Input Modal */}
       {showInvitationCodeInput && (

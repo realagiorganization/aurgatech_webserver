@@ -19,6 +19,7 @@
         public const int SUBACCOUNT_NOT_EXISTS = -112;
         public const int INVITATION_TOKEN_MISMATCH = -113;
         public const int INVALID_INVITATION = -114;
+        public const int VERIFICATION_TOKEN_MISMATCH = -115;
         public const int EXCEPTION = -1000;
 
         public const int SERVER_IS_NOT_READY = -2000;

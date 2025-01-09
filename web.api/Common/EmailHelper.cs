@@ -56,6 +56,31 @@ The AURGA Team";
             MailSender.DefaultSender.SendMail(msg);
         }
 
+        public static void SendUpdateEmailEmail(string email, string verificationCode)
+        {
+            var msg = new MailItem();
+            msg.Subject = "Change Password Verification Code - Action Required";
+            msg.CampaignId = -1;
+            msg.Address = email;
+            msg.Message = $@"Hey,
+
+We've received a request to change the password for your account. To proceed with updating your password, please enter the following 6-digit verification code on our website:
+
+Verification Code:   {verificationCode}
+
+Please note that this verification code will expire in 10 minutes, so be sure to enter it promptly.
+
+If you did not initiate this request, please ignore this email and your password will remain unchanged.
+
+If you have any questions or need further assistance, feel free to contact our support team via this email.
+
+Best regards,
+The AURGA Team";
+
+            MailSender.DefaultSender.SendMail(msg);
+        }
+
+
         public static void SendDeactivationCodeEmail(string email, string verificationCode)
         {
             var msg = new MailItem();
@@ -123,6 +148,28 @@ The AURGA Team";
 
             MailSender.DefaultSender.SendMail(msg);
         }
+
+        public static void SendUpdateEmailSuccess(string email)
+        {
+            var msg = new MailItem();
+            msg.Subject = "Your Email Address Has Been Updated Successfully!";
+            msg.CampaignId = -1;
+            msg.Address = email;
+            msg.Message = $@"Hey,
+
+We're happy to let you know that your account email address has been successfully updated. 🎉
+
+If you did not make this change or have any concerns, please contact us immediately for assistance.
+
+Thank you for choosing AURGA. We're here to support you every step of the way!
+
+Best regards,
+The AURGA Team";
+
+            MailSender.DefaultSender.SendMail(msg);
+        }
+
+
 
         public static void SendResetPasswordSuccess(string email)
         {

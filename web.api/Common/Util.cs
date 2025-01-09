@@ -429,7 +429,23 @@ namespace aurga.Common
             }
         }
 
-       public static void GenerateDeactivationCodeIfNecessary(UserInfo userInfo)
+        public static void GenerateUpdateEmailCodeIfNecessary(UserInfo userInfo, string newEmail)
+        {
+            if (DateTime.Now.Subtract(userInfo.UpdateEmailVerificationTime).TotalMinutes > 3 ||
+                string.IsNullOrEmpty(userInfo.UpdateEmailToken) ||
+                string.IsNullOrEmpty(userInfo.UpdateEmailVerificationCode) ||
+                !string.Equals(newEmail, userInfo.NewEmail, StringComparison.InvariantCultureIgnoreCase))
+            {
+                userInfo.UpdateEmailVerificationCode = (Random.Shared.Next() % 1000000).ToString("000000");
+                userInfo.UpdateEmailToken = Util.Bytes2Hex(Util.GenerateRandomBytes(8));
+                userInfo.UpdateEmailVerificationTime = DateTime.Now;
+                userInfo.NewEmail = newEmail;
+
+                EmailHelper.SendUpdateEmailEmail(newEmail, userInfo.UpdateEmailVerificationCode);
+            }
+        }
+
+        public static void GenerateDeactivationCodeIfNecessary(UserInfo userInfo)
         {
             if (DateTime.Now.Subtract(userInfo.DeactivationVerificationTime).TotalMinutes > 3 ||
                 string.IsNullOrEmpty(userInfo.DeactivationToken) ||

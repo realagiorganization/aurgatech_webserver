@@ -1967,6 +1967,197 @@ namespace aurga
                 }
             });
             #endregion
+
+            #region Account Rename
+            app.MapPost("/api/v2/rename_account", async (HttpContext http, RequestRenameAccount request) =>
+            {
+                try
+                {
+                    if (!Util.AllowAccess(http.Connection.RemoteIpAddress.ToString(), 2000))
+                    {
+                        return Results.Json(new { status = RC.IP_RESTRICT });
+                    }
+#if MIRROR
+                    var httpClient = new HttpClient();
+                    var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync($"{SharedStore.MIRROR_URL}/api/v2/rename_account", content);
+                    var responseString = await response.Content.ReadAsStringAsync();
+
+                    return Results.Json(JsonSerializer.Deserialize<object>(responseString));
+#endif
+
+                    var response_data = new { status = RC.SUCCESS };
+
+                    // Validate input
+                    if (string.IsNullOrEmpty(request.Token) || string.IsNullOrEmpty(request.Uid) || string.IsNullOrEmpty(request.NewName) || request.NewName?.Length > 100)
+                    {
+                        response_data = new { status = RC.INVALID_PARAMETERS };
+                        return Results.Json(response_data);
+                    }
+
+                    var token = Util.DecodeUserToken(request.Token);
+
+                    // check if user exists in cache
+                    UserInfo? userInfo;
+                    lock (cacheUsers)
+                    {
+                        userInfo = cacheUsers.FirstOrDefault(u => string.Equals(u.UserGUID, request.Uid));
+                    }
+
+                    if (userInfo?.Token != token)
+                    {
+                        response_data = new { status = RC.TOKEN_MISMATCH };
+                        return Results.Json(response_data);
+                    }
+
+                    var ctx = http.RequestServices.GetRequiredService<DataContext>();
+                    var result = await ctx.Users.Where(o => o.UserId == userInfo.Id).ExecuteUpdateAsync(o => o.SetProperty(d => d.Name, request.NewName));
+
+                    if (result == 1)
+                    {
+                        userInfo.Name = request.NewName;
+                    }
+
+                    return Results.Json(new { status = (result == 1) ? RC.SUCCESS : RC.ACCOUNT_NOT_EXISTS });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    return Results.Json(new { status = RC.EXCEPTION });
+                }
+            });
+            #endregion
+
+            #region Account Update Email
+            app.MapPost("/api/v2/update_email", async (HttpContext http, RequestUpdateEmail request) =>
+            {
+                try
+                {
+                    if (!Util.AllowAccess(http.Connection.RemoteIpAddress.ToString(), 2000))
+                    {
+                        return Results.Json(new { status = RC.IP_RESTRICT });
+                    }
+#if MIRROR
+                    var httpClient = new HttpClient();
+                    var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync($"{SharedStore.MIRROR_URL}/api/v2/update_email", content);
+                    var responseString = await response.Content.ReadAsStringAsync();
+
+                    return Results.Json(JsonSerializer.Deserialize<object>(responseString));
+#endif
+
+                    var response_data = new { status = RC.SUCCESS };
+
+                    // Validate input
+                    if (string.IsNullOrEmpty(request.Token) || string.IsNullOrEmpty(request.Uid) || string.IsNullOrEmpty(request.NewEmail) || request.NewEmail?.Length > 100)
+                    {
+                        response_data = new { status = RC.INVALID_PARAMETERS };
+                        return Results.Json(response_data);
+                    }
+
+                    var token = Util.DecodeUserToken(request.Token);
+
+                    // check if user exists in cache
+                    UserInfo? userInfo;
+                    lock (cacheUsers)
+                    {
+                        userInfo = cacheUsers.FirstOrDefault(u => string.Equals(u.UserGUID, request.Uid));
+                    }
+
+                    // check if the email exists in databasse
+                    var ctx = http.RequestServices.GetRequiredService<DataContext>();
+                    var emailHash = Util.Bytes2Hex(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(request.NewEmail.ToLower().Trim())));
+                    var emailExists = await ctx.Users.AnyAsync(o => o.EmailHash == emailHash);
+                    if (emailExists)
+                    {
+                        return Results.Json(new { status = RC.EMAIL_REGISTERED});
+                    }
+
+                    if (userInfo?.Token != token)
+                    {
+                        return Results.Json(new { status = RC.TOKEN_MISMATCH });
+                    }
+
+                    Util.GenerateUpdateEmailCodeIfNecessary(userInfo, request.NewEmail);
+
+                    return Results.Json(new { status = RC.SUCCESS, token = userInfo.UpdateEmailToken });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    return Results.Json(new { status = RC.EXCEPTION });
+                }
+            });
+            #endregion
+
+            #region Account Confirm Update Email
+            app.MapPost("/api/v2/confirm_email_change", async (HttpContext http, RequestConfirmEmailChange request) =>
+            {
+                try
+                {
+                    if (!Util.AllowAccess(http.Connection.RemoteIpAddress.ToString(), 2000))
+                    {
+                        return Results.Json(new { status = RC.IP_RESTRICT });
+                    }
+#if MIRROR
+                    var httpClient = new HttpClient();
+                    var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync($"{SharedStore.MIRROR_URL}/api/v2/update_email", content);
+                    var responseString = await response.Content.ReadAsStringAsync();
+
+                    return Results.Json(JsonSerializer.Deserialize<object>(responseString));
+#endif
+
+                    var response_data = new { status = RC.SUCCESS };
+
+                    // Validate input
+                    if (string.IsNullOrEmpty(request.Token) || string.IsNullOrEmpty(request.Uid) || string.IsNullOrEmpty(request.Code) || string.IsNullOrEmpty(request.UpdateToken))
+                    {
+                        response_data = new { status = RC.INVALID_PARAMETERS };
+                        return Results.Json(response_data);
+                    }
+
+                    var token = Util.DecodeUserToken(request.Token);
+
+                    // check if user exists in cache
+                    UserInfo? userInfo;
+                    lock (cacheUsers)
+                    {
+                        userInfo = cacheUsers.FirstOrDefault(u => string.Equals(u.UserGUID, request.Uid));
+                    }
+
+                    if (userInfo?.Token != token)
+                    {
+                        return Results.Json(new { status = RC.TOKEN_MISMATCH });
+                    }
+
+                    if (userInfo?.UpdateEmailToken != request.UpdateToken)
+                    {
+                        return Results.Json(new { status = RC.TOKEN_MISMATCH });
+                    }
+
+                    if (string.Equals(userInfo.UpdateEmailVerificationCode, request.Code))
+                    {
+                        var emailHash = Util.Bytes2Hex(MD5.Create().ComputeHash(Encoding.UTF8.GetBytes(userInfo.NewEmail.ToLower().Trim())));
+                        var ctx = http.RequestServices.GetRequiredService<DataContext>();
+                        var result = await ctx.Users.Where(o => o.UserId == userInfo.Id).ExecuteUpdateAsync(o => o.SetProperty(d => d.Email, userInfo.NewEmail).SetProperty(d => d.EmailHash, emailHash));
+                        userInfo.Email = userInfo.NewEmail;
+                        userInfo.EmailHash = emailHash;
+                        EmailHelper.SendUpdateEmailSuccess(userInfo.NewEmail);
+                        return Results.Json(new { status = RC.SUCCESS});
+                    }
+                    else
+                    {
+                        return Results.Json(new { status = RC.VERIFICATION_CODE_MISMATCH });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    return Results.Json(new { status = RC.EXCEPTION });
+                }
+            });
+            #endregion
         }
     }
 }

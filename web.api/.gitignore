@@ -26,3 +26,5 @@ dist-ssr
 aurga.http
 PublishProfiles
 .vs
+obj
+wwwroot

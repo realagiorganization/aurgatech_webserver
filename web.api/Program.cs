@@ -54,7 +54,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine(ex);
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred creating the DB.");
     }
@@ -114,4 +113,10 @@ record RequestModifySubDevice(string Uid, string Token, long AccountId, long Dev
 record RequestGetMainAccountList(string Uid, string Token);
 
 record RequestDisconnectMainAccount(string Uid, string Token, long AccountId);
+
+record RequestRenameAccount(string Uid, string Token, string NewName);
+
+record RequestUpdateEmail(string Uid, string Token, string NewEmail);
+
+record RequestConfirmEmailChange(string Uid, string Token, string Code, string UpdateToken);
 #endregion
