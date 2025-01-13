@@ -144,7 +144,7 @@ services:
 ```
 Save this as `docker-compose.yml` and run:
 ```bash
-docker-compose up -d
+sudo docker-compose up -d
 ```
 ### Notes
 - Ensure the local database directory (`/path/to/local/database`) exists and has the correct permissions.
