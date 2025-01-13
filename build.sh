@@ -5,9 +5,9 @@ BASEDIR=`pwd`
 
 # Check if the operating system is macOS (OSX)
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  ./web.app/osx.sh
+  bash ./web.app/osx.sh
 else
-  ./web.app/linux.sh
+  bash ./web.app/linux.sh
 fi
 
 cd $BASEDIR
