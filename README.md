@@ -1,3 +1,8 @@
+#TODO
+1. Add workflow badges to readme
+2. Make sure github actions deploys to azure web container apps
+3. Make sure that [azure web container apps mounts azure storage as volume](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts-azure-files?source=recommendations&tabs=bash)
+
 # Project Overview
 
 This project consists of two main parts:
